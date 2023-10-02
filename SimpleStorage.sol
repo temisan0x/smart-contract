@@ -5,7 +5,7 @@ contract SimpleStorage {
     uint256 public myFavouriteNumber; //0
 
     struct Person {
-        uint256 favoriteNumber;
+        uint256 favoriteNumber; //defaulted to 0
         string name;
     }
 
@@ -17,8 +17,8 @@ contract SimpleStorage {
         retrieve();
     }
 
-    //reads what the variable is 
-    //view, pure
+    //
+    //view --read the state of the blockchain
     function retrieve() public view returns (uint256){
         return  myFavouriteNumber;
     }
