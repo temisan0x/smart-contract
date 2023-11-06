@@ -34,6 +34,8 @@ interface AggregatorV3Interface {
         );
 }
 
+error notOwner();
+
 contract FundMe {
     using PriceConverter for uint256;
 
@@ -101,7 +103,7 @@ contract FundMe {
 
     //executes the modifier first
     modifier onlyOwner() {
-        require(msg.sender == i_owner, "Sender is not the owner");
+        if(msg.sender == i_owner) {revert notOwner();}
         _;
     }
 }
