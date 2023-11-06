@@ -21,7 +21,6 @@ interface AggregatorV3Interface {
 }
 
 
-
 contract FundMe {
     using PriceConverter for uint256;
 
@@ -34,15 +33,15 @@ contract FundMe {
 
     uint256 public mininumUsd = 5e18; //5 eth(in wei)
     //50000000000000000000
-    mapping(address funder => uint256 amountFunded) public addressToAmountFunded;
     address [] public funders; //this will represent an array of Ethereum addresses for funders 
-
+    mapping(address funder => uint256 amountFunded) public addressToAmountFunded;
 
     function fund() public payable  {
       //Allow users to send $
       //Have a minumum $ snet $5
      require(msg.value.getConversionRate() >= mininumUsd, "didn't send the transaction");
      funders.push(msg.sender);//push the sender of the transaction to the contract
+     addressToAmountFunded[msg.sender] += msg.value;
     }
 
 
@@ -79,7 +78,7 @@ contract FundMe {
 
     //executes the modifier first
     modifier onlyOwner(){
-      require(msg.sender == owner, "Sender is no the owner");
+      require(msg.sender == owner, "Sender is not the owner");
       _;
     }
 }
