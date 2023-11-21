@@ -3,7 +3,7 @@
 pragma solidity ^0.8.18;
 
 import {Script} from "forge-std/Script.sol";
-import {FundMe} from "../lesson2/FundMe.sol";
+import {FundMe} from "../src/lesson2/FundMe.sol";
 
 contract DeployFundMe is Script {
     // Deploy a new instance of the FundMe contract
