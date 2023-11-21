@@ -1,41 +1,27 @@
 // SPDX-License-Identifier: MIT
-
+// Author: Temisan Momodu
 pragma solidity ^0.8.18;
-
-interface AggregatorV3Interface {
-  function decimals() external view returns (uint8);
-
-  function description() external view returns (string memory);
-
-  function version() external view returns (uint256);
-
-  function getRoundData(
-    uint80 _roundId
-  ) external view returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
-
-  function latestRoundData()
-    external
-    view
-    returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
-}
-
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 library PriceConverter {
-    function getPrice() public  view returns(uint256) {
-        //ABI
-       AggregatorV3Interface priceFeed = AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306);
-       (, int256 price, , ,) = priceFeed.latestRoundData();
-      
-       return uint256(price * 1e10);
+    // Get the latest price from the Chainlink Price Feed
+    function getPrice(AggregatorV3Interface priceFeed) public view returns (uint256) {
+        (, int256 price, , , ) = priceFeed.latestRoundData();
+        // Multiply by 1e10 to convert to a uint256 value
+        return uint256(price) * 1e10;
     }
 
-    function getConversionRate(uint256 ethAmount) public view returns(uint256) {
-      uint256 ethPrice = getPrice();
-      uint256 ethAmountInUsd = (ethPrice * ethAmount)/ 1e18;
-      return ethAmountInUsd;
+    // Get the conversion rate for a given amount of ETH
+    function getConversionRate(uint256 ethAmount, AggregatorV3Interface priceFeed) public view returns (uint256) {
+        uint256 ethPrice = getPrice(priceFeed);
+        // Calculate the amount in USD
+        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;
+        return ethAmountInUsd;
     }
 
-      function getVersion() public view returns(uint256) {
-      return AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306).version();
+    // Get the version of the Chainlink Price Feed
+    function getVersion() public view returns (uint256) {
+        // Use a specific address for Chainlink Price Feed to get the version
+        return AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306).version();
     }
 }
