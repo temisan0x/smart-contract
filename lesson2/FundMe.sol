@@ -1,122 +1,87 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+// SPDX-License-Identifier: UNLICENSED
+// Author: Temisan Momodu
+pragma solidity ^0.8.13;
 import {PriceConverter} from "./PriceConverter.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-interface AggregatorV3Interface {
-    function decimals() external view returns (uint8);
-
-    function description() external view returns (string memory);
-
-    function version() external view returns (uint256);
-
-    function getRoundData(
-        uint80 _roundId
-    )
-        external
-        view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        );
-
-    function latestRoundData()
-        external
-        view
-        returns (
-            uint80 roundId,
-            int256 answer,
-            uint256 startedAt,
-            uint256 updatedAt,
-            uint80 answeredInRound
-        );
-}
-
-error notOwner();
+// Custom error for ownership check
+error FundMe__NotOwner();
 
 contract FundMe {
     using PriceConverter for uint256;
 
+    // Chainlink Price Feed Interface
+    AggregatorV3Interface private s_priceFeed;
+
+    // Event emitted when a new price is received
     event PriceReceived(int256 price);
 
-    uint256 public constant MINIMUM_USD = 5e18; //5 eth(in wei)
-    //50000000000000000000
-    address[] public funders; //this will represent an array of Ethereum addresses for funders
-    mapping(address funder => uint256 amountFunded)
-        public addressToAmountFunded;
+    // Minimum amount in USD required for funding
+    uint256 public constant MINIMUM_USD = 5e18;
 
+    // Array of Ethereum addresses of funders
+    address[] public funders;
+
+    // Mapping to track the amount funded by each address
+    mapping(address => uint256) public addressToAmountFunded;
+
+    // Owner's address
     address public immutable i_owner;
 
-    constructor() {
+    // Contract constructor
+    constructor(address priceFeed) {
         i_owner = msg.sender;
+        s_priceFeed = AggregatorV3Interface(priceFeed);
     }
 
+    // Function to allow users to fund the contract
     function fund() public payable {
-        //Allow users to send $
-        //Have a minumum $ snet $5
+        // Ensure the sent amount meets the minimum USD requirement
         require(
-            msg.value.getConversionRate() >= MINIMUM_USD,
-            "didn't send the transaction"
+            msg.value.getConversionRate(s_priceFeed) >= MINIMUM_USD,
+            "Insufficient funds sent"
         );
-        funders.push(msg.sender); //push the sender of the transaction to the contract
+
+        // Record the funder's address and the funded amount
+        funders.push(msg.sender);
         addressToAmountFunded[msg.sender] += msg.value;
     }
 
+    // Function for the owner to withdraw funds
     function withdraw() public onlyOwner {
-        for (
-            uint256 funderIndex = 0;
-            funderIndex < funders.length;
-            funderIndex++
-        ) {
+        // Reset amounts funded by each funder
+        for (uint256 funderIndex = 0; funderIndex < funders.length; funderIndex++) {
             address funder = funders[funderIndex];
-            addressToAmountFunded[funder] = 0; //reset the amount sent to 0;
+            addressToAmountFunded[funder] = 0;
         }
-        //reset array
+
+        // Reset the funders array
         funders = new address[](0);
 
-        //Lower level functions
-        //transfer
-        //payable (msg.sender).transfer(address(this).balance);
-        //send
-        // bool sendSuccess = payable(msg.sender).send(address(this).balance);
-        // require(sendSuccess, "Send failed");
-        //call
-        (bool callSuccess, ) = payable(msg.sender).call{
-            value: address(this).balance
-        }("");
-        require(callSuccess, "call failed");
+        // Transfer the contract balance to the owner
+        (bool callSuccess, ) = payable(msg.sender).call{value: address(this).balance}("");
+        require(callSuccess, "Withdrawal failed");
     }
 
+    // Function to log the latest price from the Chainlink Price Feed
     function logPrice() public {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
-        );
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 price, , , ) = s_priceFeed.latestRoundData();
 
-        // Answer = price of eth in USD
         // Log the received price for debugging
         emit PriceReceived(price);
+
+        // Ensure the price is not negative (sanity check)
         require(price >= 0, "Negative price not supported");
     }
 
+    // Function to get the version of the Chainlink Price Feed
     function getVersion() public view returns (uint256) {
-        AggregatorV3Interface priceFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
-        );
-        return priceFeed.version();
+        return s_priceFeed.version();
     }
 
-    //executes the modifier first
+    // Modifier to check if the sender is the owner
     modifier onlyOwner() {
-        if (msg.sender == i_owner) {
-            revert notOwner();
-        }
+        require(msg.sender == i_owner, "Not the owner");
         _;
     }
 }
-
-//returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound);
-//uint256: 1829445376950000000000
-//uint256: 182944537695
