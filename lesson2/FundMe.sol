@@ -101,9 +101,18 @@ contract FundMe {
         require(price >= 0, "Negative price not supported");
     }
 
+    function getVersion() public view returns (uint256) {
+        AggregatorV3Interface priceFeed = AggregatorV3Interface(
+            0x694AA1769357215DE4FAC081bf1f309aDC325306
+        );
+        return priceFeed.version();
+    }
+
     //executes the modifier first
     modifier onlyOwner() {
-        if(msg.sender == i_owner) {revert notOwner();}
+        if (msg.sender == i_owner) {
+            revert notOwner();
+        }
         _;
     }
 }
