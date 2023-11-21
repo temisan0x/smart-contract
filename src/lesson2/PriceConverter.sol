@@ -20,8 +20,8 @@ library PriceConverter {
     }
 
     // Get the version of the Chainlink Price Feed
-    function getVersion() public view returns (uint256) {
+    function getVersion(AggregatorV3Interface priceFeed) public view returns (uint256) {
         // Use a specific address for Chainlink Price Feed to get the version
-        return AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306).version();
+        return priceFeed.version();
     }
 }
