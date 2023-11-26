@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Author: Temisan Momodu
 pragma solidity ^0.8.18;
-
 import {Script} from "forge-std/Script.sol";
 import {FundMe} from "../src/lesson2/FundMe.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
