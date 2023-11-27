@@ -1,4 +1,5 @@
-//SPX-License-Identifier:MIT
+// SPDX-License-Identifier: MIT
+// Author: Temisan Momodu
 pragma solidity ^0.8.18;
 
 import {Test, console} from "forge-std/Test.sol";
@@ -10,6 +11,7 @@ contract FundMeTest is Test {
     address USER = makeAddr("user"); //mock address
     uint256 constant SEND_VALUE = 0.1 ether; //100000000000000000
     uint256 constant STARTING_BALANCE = 10 ether;
+    uint256 constant GAS_PRICE = 1;
 
     // Deploy FundMe contract before each test
     function setUp() external {
@@ -71,10 +73,15 @@ contract FundMeTest is Test {
         //Arrange
         uint256 startingOwnerBalance = fundMe.getOwner().balance;
         uint256 startingFundMeBalance = address(fundMe).balance;
+
         //Action
-        vm.startPrank(fundMe.getOwner()); //make sure we are actually the owner
+        uint256 gasStart = gasleft();//1000
+        vm.txGasPrice(GAS_PRICE);
+        vm.prank(fundMe.getOwner()); //c:200
         fundMe.withdraw();
-        vm.stopPrank();
+        uint256 gasEnd = gasleft(); //800
+        uint256 gasUsed = (gasStart - gasEnd) * tx.gasprice;
+        console.log(gasUsed); 
 
         //Assert
         uint256 endingOwnerBalance = fundMe.getOwner().balance;
